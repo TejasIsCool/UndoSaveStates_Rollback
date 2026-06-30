@@ -157,13 +157,14 @@ void saveState(int fromTime, int toTime, const string&in commandLine, const arra
     //     }
     // }
     current_state += 1;
-    printStateList();
-    log("Current: "+states_list[current_state].pre+"_"+states_list[current_state].post);
+    // printStateList();
 
     if (!f.Save(states_list[current_state].pre+"_"+states_list[current_state].post+".bin", error)) {
         // Handle error
         log(error);
     }
+    log("Saved: "+states_list[current_state].pre+"_"+states_list[current_state].post);
+
 }
 
 
@@ -186,6 +187,8 @@ void loadState(int fromTime, int toTime, const string&in commandLine, const arra
     SimulationManager@ simManager = GetSimulationManager();
     // Restore the full file with inputs and previous states
     simManager.RewindToState(f);
+    log("Loaded: "+states_list[current_state].pre+"_"+states_list[current_state].post);
+
 }
 
 // go to previous state
@@ -237,6 +240,26 @@ void exportStates(int fromTime, int toTime, const string&in commandLine, const a
 
     // Should export as a file too maybe? Not sure
     print(toJson(export_dict));
+}
+
+void logStates (int fromTime, int toTime, const string&in commandLine, const array<string>&in args) {
+    dictionary export_dict;
+    export_dict.Set("uid", uid);
+    export_dict.Set("current_state", current_state);
+    export_dict.Set("states_tracker", states_tracker);
+    // Need to convert array of StateStringStore to two arrays of strings, one for pre and one for post
+    array<string> pre_list;
+    array<string> post_list;
+    for (uint i = 0; i < states_list.get_Length(); i++) {
+        pre_list.Add(states_list[i].pre);
+        post_list.Add(states_list[i].post);
+    }
+
+    export_dict.Set("states_list_pre", pre_list);
+    export_dict.Set("states_list_post", post_list);
+
+    // Should export as a file too maybe? Not sure
+    log(toJson(export_dict));
 }
 
 void importStates(int fromTime, int toTime, const string&in commandLine, const array<string>&in args) {
@@ -319,6 +342,7 @@ void Main()
     RegisterCustomCommand("ussr_reset_states", "Resets the tracking of states", resetStates);
     RegisterCustomCommand("ussr_export_states", "Export the current config into a json format and prints it", exportStates);
     RegisterCustomCommand("ussr_import_states", "Imports the json configuration exported by the export command", importStates);
+    RegisterCustomCommand("ussr_log_states", "Same as export, but logs it in console", logStates);
     uid = Math::Rand(0, 2147483647);
     log("USSR started. UID: "+uid);
 
